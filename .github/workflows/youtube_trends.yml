@@ -21,7 +21,7 @@ jobs:
         run: pip install pandas requests
 
       - name: Run Data Collection Script
-        run: python fetch_trending_data.py
+        run: python fetch_trending_data.py  # No changes here!
 
       - name: Upload Trending Data
         uses: actions/upload-artifact@v4
@@ -31,7 +31,7 @@ jobs:
 
   extract-keywords:
     runs-on: ubuntu-latest
-    needs: fetch-trending-data  # Ensures data is fetched first
+    needs: fetch-trending-data
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
           path: .
 
       - name: Run Keyword Extraction Script
-        run: python extract_keywords.py
+        run: python extract_keywords.py  # Fixed to use TextBlob
 
       - name: Upload Word Cloud
         uses: actions/upload-artifact@v4
