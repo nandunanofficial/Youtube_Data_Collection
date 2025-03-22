@@ -2,8 +2,7 @@ name: YouTube Trending Keywords
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs every day at midnight (UTC) for fetching data
-    - cron: '0 0 * * 0'  # Runs every Sunday at midnight (UTC) for keyword extraction
+    - cron: '*/30 * * * *'  # Runs every 30 minutes
   workflow_dispatch:  # Allows manual execution
 
 permissions:
