@@ -1,0 +1,62 @@
+name: YouTube Trending Keywords
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs every day at midnight (UTC) for fetching data
+    - cron: '0 0 * * 0'  # Runs every Sunday at midnight (UTC) for keyword extraction
+  workflow_dispatch:  # Allows manual execution
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fetch-trending-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: pip install pandas requests nltk wordcloud matplotlib
+
+      - name: Run Data Fetching Script
+        run: python fetch_trending.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add youtube_trending_data.csv
+          git commit -m "Updated trending video data"
+          git push origin main
+
+  extract-keywords:
+    needs: fetch-trending-data
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 0 * * 0'  # Run only on Sundays
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: pip install pandas nltk wordcloud matplotlib
+
+      - name: Run Keyword Extraction Script
+        run: python extract_keywords.py
+
+      - name: Upload Word Cloud
+        uses: actions/upload-artifact@v3
+        with:
+          name: wordcloud
+          path: wordcloud.png
