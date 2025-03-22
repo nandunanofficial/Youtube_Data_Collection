@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * *'  # Runs daily at midnight
   workflow_dispatch:  # Allows manual execution
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   fetch-trending-data:
     runs-on: ubuntu-latest
