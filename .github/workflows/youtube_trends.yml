@@ -1,9 +1,9 @@
-name: YouTube Trending Keyword Extraction
+name: YouTube Trending Data Pipeline
 
 on:
   schedule:
     - cron: '0 * * * *'  # Runs every hour
-  workflow_dispatch:  # Allows manual execution
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
   fetch-trending-data:
@@ -20,8 +20,8 @@ jobs:
       - name: Install Dependencies
         run: pip install pandas requests
 
-      - name: Fetch YouTube Trending Data
-        run: python fetch_trending.py
+      - name: Run Data Collection Script
+        run: python fetch_trending_data.py
 
       - name: Upload Trending Data
         uses: actions/upload-artifact@v4
@@ -31,7 +31,7 @@ jobs:
 
   extract-keywords:
     runs-on: ubuntu-latest
-    needs: fetch-trending-data  # Ensure trending data is fetched first
+    needs: fetch-trending-data  # Ensures data is fetched first
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -42,10 +42,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install Dependencies
-        run: pip install pandas nltk wordcloud matplotlib
-
-      - name: Download NLTK Data
-        run: python -c "import nltk; nltk.download('punkt')"
+        run: pip install pandas textblob wordcloud matplotlib
 
       - name: Download Trending Data
         uses: actions/download-artifact@v4
