@@ -1,48 +1,44 @@
 import pandas as pd
 import nltk
-from nltk.corpus import stopwords
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
-# Download stopwords
-nltk.download("stopwords")
+# Load dataset
+df = pd.read_csv("youtube_trending_data.csv")
 
-CSV_FILE = "youtube_trending_data.csv"
-N_DAYS = 7  # Set the period for keyword analysis
+# Ensure the dataset has the correct column
+if "Trending_Date" in df.columns:
+    df["Trending_Date"] = pd.to_datetime(df["Trending_Date"], errors='coerce')
 
-def extract_keywords():
-    df = pd.read_csv(CSV_FILE, names=["Title", "Description", "Tags", "Trending_Date"])
-    df["Trending_Date"] = pd.to_datetime(df["Trending_Date"])
-    
-    # Filter last N days
-    recent_data = df[df["Trending_Date"] >= pd.Timestamp.today() - pd.Timedelta(days=N_DAYS)]
+# Drop rows where date parsing failed
+df = df.dropna(subset=["Trending_Date"])
 
-    # Combine Titles, Descriptions, and Tags
-    text_data = " ".join(recent_data["Title"].astype(str) + " " + recent_data["Description"].astype(str) + " " + recent_data["Tags"].astype(str))
+# Convert to string (if not already)
+df["Trending_Date"] = df["Trending_Date"].astype(str)
 
-    # Tokenization
-    words = text_data.lower().split()
+# Filter videos from the last X days (e.g., last 7 days)
+recent_days = 7
+latest_date = df["Trending_Date"].max()
+df_filtered = df[df["Trending_Date"] >= (pd.to_datetime(latest_date) - pd.Timedelta(days=recent_days)).strftime("%Y-%m-%d")]
 
-    # Remove Stopwords
-    stop_words = set(stopwords.words("english"))
-    filtered_words = [word for word in words if word.isalnum() and word not in stop_words]
+# Extract keywords from titles & descriptions
+nltk.download('punkt')
 
-    # Count Word Frequency
-    word_counts = Counter(filtered_words)
-    top_keywords = word_counts.most_common(20)
+all_text = " ".join(df_filtered["Title"].astype(str) + " " + df_filtered["Description"].astype(str))
+words = nltk.word_tokenize(all_text)
+words = [word.lower() for word in words if word.isalpha()]  # Remove numbers & special chars
 
-    print("Top Trending Keywords:")
-    for word, count in top_keywords:
-        print(f"{word}: {count}")
+# Get top keywords
+word_freq = Counter(words)
+top_keywords = dict(word_freq.most_common(50))
 
-    # Generate Word Cloud
-    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(" ".join(filtered_words))
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.axis("off")
-    plt.savefig("wordcloud.png")  # Save word cloud image
-    plt.show()
+# Generate Word Cloud
+wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(top_keywords)
+wordcloud.to_file("wordcloud.png")
 
-if __name__ == "__main__":
-    extract_keywords()
+# Show the word cloud (optional)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.show()
