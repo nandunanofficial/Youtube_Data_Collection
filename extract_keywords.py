@@ -4,6 +4,9 @@ from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
+# Download the necessary NLTK resource
+nltk.download('punkt')
+
 # Load dataset
 df = pd.read_csv("youtube_trending_data.csv")
 
@@ -23,8 +26,6 @@ latest_date = df["Trending_Date"].max()
 df_filtered = df[df["Trending_Date"] >= (pd.to_datetime(latest_date) - pd.Timedelta(days=recent_days)).strftime("%Y-%m-%d")]
 
 # Extract keywords from titles & descriptions
-nltk.download('punkt')
-
 all_text = " ".join(df_filtered["Title"].astype(str) + " " + df_filtered["Description"].astype(str))
 words = nltk.word_tokenize(all_text)
 words = [word.lower() for word in words if word.isalpha()]  # Remove numbers & special chars
