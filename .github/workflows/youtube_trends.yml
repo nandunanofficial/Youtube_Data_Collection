@@ -2,7 +2,7 @@ name: YouTube Trending Keywords
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Runs every 30 minutes
+    - cron: '0 * * * *'  # Runs every hour
   workflow_dispatch:  # Allows manual execution
 
 permissions:
@@ -33,12 +33,11 @@ jobs:
           git config --global user.email "actions@github.com"
           git add youtube_trending_data.csv
           git commit -m "Updated trending video data"
-          git push origin main
+          git push origin main || echo "No changes to commit"
 
   extract-keywords:
-    needs: fetch-trending-data
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 0 * * 0'  # Run only on Sundays
+    needs: fetch-trending-data  # Ensure it runs after data fetching
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
