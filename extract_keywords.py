@@ -1,41 +1,54 @@
 import pandas as pd
-from collections import Counter
-from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-from textblob import TextBlob
+import seaborn as sns
 
-# Load dataset
-df = pd.read_csv("youtube_trending_data.csv")
+CSV_FILE = "trending_videos.csv"
 
-# Ensure correct date parsing
-if "Trending_Date" in df.columns:
-    df["Trending_Date"] = pd.to_datetime(df["Trending_Date"], errors='coerce')
+def load_data():
+    """Load the trending video data from CSV."""
+    df = pd.read_csv(CSV_FILE)
+    df["Trending_Date"] = pd.to_datetime(df["Trending_Date"])
+    return df
 
-df = df.dropna(subset=["Trending_Date"])
+def analyze_trending_duration(df):
+    """Find how long videos stay trending."""
+    video_counts = df.groupby("Video_ID")["Trending_Date"].count().reset_index()
+    video_counts.columns = ["Video_ID", "Days_Trending"]
+    
+    print("\nTop Videos by Days Trending:")
+    print(video_counts.sort_values(by="Days_Trending", ascending=False).head(10))
 
-# Convert to string (if not already)
-df["Trending_Date"] = df["Trending_Date"].astype(str)
+    # Plot Distribution
+    plt.figure(figsize=(8, 5))
+    sns.histplot(video_counts["Days_Trending"], bins=10, kde=True)
+    plt.title("Distribution of Days Videos Stay Trending")
+    plt.xlabel("Days on Trending List")
+    plt.ylabel("Number of Videos")
+    plt.show()
 
-# Filter videos from the last 7 days
-recent_days = 7
-latest_date = df["Trending_Date"].max()
-df_filtered = df[df["Trending_Date"] >= (pd.to_datetime(latest_date) - pd.Timedelta(days=recent_days)).strftime("%Y-%m-%d")]
+def analyze_engagement_growth(df):
+    """Analyze growth in views, likes, and comments over time."""
+    video_growth = df.groupby(["Video_ID", "Trending_Date"])[["Views", "Likes", "Comments"]].sum().reset_index()
+    
+    # Pick a sample video (change this to any video ID for analysis)
+    sample_video = video_growth["Video_ID"].value_counts().idxmax()
+    video_df = video_growth[video_growth["Video_ID"] == sample_video]
 
-# Extract keywords from titles & descriptions using TextBlob
-all_text = " ".join(df_filtered["Title"].astype(str) + " " + df_filtered["Description"].astype(str))
-blob = TextBlob(all_text)
+    # Plot Growth Over Time
+    plt.figure(figsize=(10, 5))
+    plt.plot(video_df["Trending_Date"], video_df["Views"], label="Views", marker="o")
+    plt.plot(video_df["Trending_Date"], video_df["Likes"], label="Likes", marker="s")
+    plt.plot(video_df["Trending_Date"], video_df["Comments"], label="Comments", marker="^")
 
-# Get top keywords (nouns only)
-words = [word.lower() for word, tag in blob.tags if tag.startswith("NN")]  # Nouns
-word_freq = Counter(words)
-top_keywords = dict(word_freq.most_common(50))
+    plt.xlabel("Date")
+    plt.ylabel("Engagement Count")
+    plt.title(f"Engagement Growth for Video: {sample_video}")
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.grid()
+    plt.show()
 
-# Generate Word Cloud
-wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(top_keywords)
-wordcloud.to_file("wordcloud.png")
-
-# Show the word cloud (optional)
-plt.figure(figsize=(10, 5))
-plt.imshow(wordcloud, interpolation="bilinear")
-plt.axis("off")
-plt.show()
+if __name__ == "__main__":
+    df = load_data()
+    analyze_trending_duration(df)
+    analyze_engagement_growth(df)
