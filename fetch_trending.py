@@ -6,7 +6,7 @@ from datetime import datetime
 # YouTube API Key (Replace with your actual key)
 API_KEY = "AIzaSyCbE9LwgnK_lGlMTpQpItxi58WCkhfwit4"
 REGION = "IN"
-MAX_RESULTS = 50
+MAX_RESULTS = 15
 CSV_FILE = "trending_videos.csv"
 
 def fetch_trending_videos():
